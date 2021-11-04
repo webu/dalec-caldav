@@ -1,8 +1,24 @@
 {% extends "dalec/default/item.html" %}
 {% block item_content %}
 <div>
-    {{object.content_data.id}}
-    
+    <div class="caldav-title">
+        <b>Nom :</b> {{object.content_data.summary}}
+    </div>
+    <div class="caldav-when">
+        Du {{object.content_data.dtstart}} au {{object.content_data.dtend}} .
+    </div>
+    <div class="caldav-where">
+        <b>Lieu :</b> {{object.content_data.location}}
+    </div>
+    <div class="caldav-event-ics">
+        <a href="{{object.content_data.event_url}}" target="_blank">
+            Ajouter à l'agenda
+            {# For some reason, it does not work unless refreshing page after... TODO. #}
+        </a>
+    </div>
+    <div class="caldav-description">
+        {{object.content_data.description}}
+    </div>
 </div>
 
 

@@ -40,4 +40,25 @@ class CaldavProxy(Proxy):
                 "per_page": nb,
                 }
 
-        # TODO
+        principal = client.principal()
+        calendars = principal.calendars()
+
+        contents = {}
+        for calendar in calendars:
+            for event in calendar.events():
+                id = event.vobject_instance.vevent.contents["uid"][0].value
+                content = {
+                        key: val[0].value
+                        for key, val
+                        in event.vobject_instance.vevent.contents.items()
+                        }
+                content["event_url"] = str(event.url)
+                content["dav_calendar_url"] = calendar.url.url_raw
+
+                contents[id] = {
+                        **content,
+                        "id": id,
+                        "creation_dt": content["created"],
+                        "last_update_dt": now()
+                        }
+        return contents
