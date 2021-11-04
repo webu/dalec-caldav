@@ -1,0 +1,20 @@
+{% extends "dalec/default/item.html" %}
+{% block item_content %}
+<div>
+    {{object.content_data.id}}
+    
+</div>
+
+
+<div>
+    <button id="btnFadetoggle"
+            class="btn btn-primary"
+            type="button"
+            onclick="$('.api-full').fadeToggle();"
+            >
+            Voir tout le retour de l'API
+    </button>
+    <pre class="api-full" style="display: none;"> {{ object.content_data|pprint }} </pre>
+</div>
+<hr>
+{% endblock %}

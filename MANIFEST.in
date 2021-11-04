@@ -1,0 +1,6 @@
+include AUTHORS
+include MANIFEST.in
+include *.md
+graft dalec_gitlab
+global-exclude __pycache__
+global-exclude *.py[co]
