@@ -38,10 +38,16 @@ Real examples:
 
 ### Events
 
-Retrieves latest events:
+Retrieves latest event of all calendars accessible for the current user:
 ```django
 {% dalec "caldav" "event" %}
 ```
+
+Retrieves latest event of a calendar defined by an url:
+```django
+{% dalec "caldav" "event" channel="url" channel_object="https://nextcloud.org/remote.php/dav/public-calendars/<calendarID>"%}
+```
+
 
 
 ## Settings
