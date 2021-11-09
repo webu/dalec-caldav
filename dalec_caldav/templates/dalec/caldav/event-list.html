@@ -1,0 +1,28 @@
+{% block dalec_list_header %}
+{% endblock dalec_list_header %}
+
+{% block dalec_list_body %}
+    <div class="dalec-list"
+         id="dalec-{{ id }}"
+         data-url="{{ url }}"
+         data-app="{{ app }}" data-content-type="{{ content_type}}"
+         {% if channel %}
+            data-channel="{{ channel }}"
+            data-channel-object="{{ channel_object }}"
+        {% endif %}
+    >
+        {% for object in object_list %}
+            {% include item_template %}
+        {% endfor %}
+    </div>
+    {% if ajax_refresh %}
+    <script type="text/javascript">
+        window.addEventListener("load", (event) => {
+            dalec_fetch_content(document.getElementById('dalec-{{ id }}'));
+        });
+    </script>
+    {% endif %}
+{% endblock dalec_list_body %}
+
+{% block dalec_list_footer %}
+{% endblock dalec_list_footer %}

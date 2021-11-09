@@ -40,8 +40,13 @@ class CaldavProxy(Proxy):
                 "per_page": nb,
                 }
 
-        principal = client.principal()
-        calendars = principal.calendars()
+        if channel == "url":
+            calendars = client.calendar(url=channel_object)
+            if type(calendars) != list:
+                calendars = [calendars]
+        else:
+            principal = client.principal()
+            calendars = principal.calendars()
 
         contents = {}
         for calendar in calendars:
