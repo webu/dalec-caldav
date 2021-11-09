@@ -1,22 +1,28 @@
 {% extends "dalec/default/item.html" %}
+{% load dalec %}
 {% block item_content %}
 <div>
-    <div class="caldav-title">
-        <b>Nom :</b> {{object.content_data.summary}}
+    <div class="caldav item title">
+        <b>Nom :</b> {{object.content_data.summary|default:"Sans titre"}}
     </div>
-    <div class="caldav-when">
-        Du {{object.content_data.dtstart}} au {{object.content_data.dtend}} .
+    <div class="caldav item date">
+        {% if "T" in object.content_data.dtstart %}
+        <b>Du</b> {{object.content_data.dtstart|to_datetime:"%Y-%m-%dT%H:%M:%S%z"}}
+        <b>au</b> {{object.content_data.dtend|to_datetime:"%Y-%m-%dT%H:%M:%S%z"}}.
+        {% else %}
+        <b>Le</b> {{object.content_data.dtstart|to_datetime:"%Y-%m-%d"|date:"DATE_FORMAT"}}.
+        {% endif %}
     </div>
-    <div class="caldav-where">
-        <b>Lieu :</b> {{object.content_data.location}}
+    <div class="caldav item location">
+        <b>Lieu :</b> {{object.content_data.location|default:"Non défini"}}
     </div>
-    <div class="caldav-event-ics">
+    <div class="caldav item ics">
         <a href="{{object.content_data.event_url}}" target="_blank">
             Ajouter à l'agenda
             {# For some reason, it does not work unless refreshing page after... TODO. #}
         </a>
     </div>
-    <div class="caldav-description">
+    <div class="caldav item description">
         {{object.content_data.description}}
     </div>
 </div>
