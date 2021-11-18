@@ -30,7 +30,7 @@ class CaldavProxy(Proxy):
         if content_type == "event":
             return self._fetch_event(nb, channel, channel_object)
 
-        raise ValueError(f"Invalid content_type {content_type}. Accepted: topic, category." )
+        raise ValueError(f"Invalid content_type {content_type}. Accepted: event." )
 
     def _fetch_event(self, nb, channel=None, channel_object=None):
         """
@@ -51,7 +51,7 @@ class CaldavProxy(Proxy):
         contents = {}
         for calendar in calendars:
             for event in calendar.events():
-                id = event.vobject_instance.vevent.contents["uid"][0].value
+                id = str(event.vobject_instance.vevent.contents["uid"][0].value)
                 content = {
                         key: val[0].value
                         for key, val
