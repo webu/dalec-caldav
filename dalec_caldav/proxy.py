@@ -70,7 +70,7 @@ class CaldavProxy(Proxy):
                 res = urlparse(calendar.url.url_raw)
                 if ( "/remote.php/dav/public-calendars/" in res.path):
                     # seems to be nextcloud
-                    token = res.path.split("/")[-1]
+                    token = res.path.split("/")[-2]
                     nextcloud_calendar_url = "{}://{}/index.php/apps/calendar/p/{}".format(
                         res.scheme, res.netloc, token
                     )
