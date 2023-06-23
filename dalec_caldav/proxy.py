@@ -1,15 +1,10 @@
-from datetime import timedelta
 from typing import Dict
-import requests
 from urllib.parse import urlparse
 
-from django.utils.dateparse import parse_datetime
-from django.utils.timezone import now
-from django.conf import settings
-
-from dalec.proxy import Proxy
-
 from caldav import DAVClient, dav
+from dalec.proxy import Proxy
+from django.conf import settings
+from django.utils.timezone import now
 
 client = DAVClient(
     url=settings.DALEC_CALDAV_BASE_URL,
@@ -68,8 +63,10 @@ class CaldavProxy(Proxy):
                 if "/remote.php/dav/public-calendars/" in res.path:
                     # seems to be nextcloud
                     token = res.path.split("/")[-2]
-                    nextcloud_calendar_url = "{}://{}/index.php/apps/calendar/p/{}".format(
-                        res.scheme, res.netloc, token
+                    nextcloud_calendar_url = (
+                        "{}://{}/index.php/apps/calendar/p/{}".format(
+                            res.scheme, res.netloc, token
+                        )
                     )
                     content["nextcloud_calendar_url"] = nextcloud_calendar_url
 

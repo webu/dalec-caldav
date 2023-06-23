@@ -4,7 +4,7 @@ Django Aggregate a Lot of External Content -- CalDav
 
 Aggregate last event from a given CalDav instance.
 
-Plugin of [dalec](https://dev.webu.coop/w/i/dalec).
+Plugin of [dalec](https://github.com/webu/dalec).
 
 ## Installation
 
@@ -34,8 +34,6 @@ General usage:
 {% dalec "caldav" content_type [channel=None] [channel_object=None] [template=None] %}
 ```
 
-Real examples:
-
 ### Events
 
 Retrieves latest event of all calendars accessible for the current user:
@@ -47,7 +45,6 @@ Retrieves latest event of a calendar defined by an url:
 ```django
 {% dalec "caldav" "event" channel="url" channel_object="https://nextcloud.org/remote.php/dav/public-calendars/<calendarID>"%}
 ```
-
 
 
 ## Settings
