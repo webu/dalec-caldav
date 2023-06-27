@@ -1,0 +1,122 @@
+name: Dalec Caldav CI
+
+on: [push, pull_request]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Current configuration:
+# - django 2.2, python 3.7
+# - django 3.2, python 3.7
+# - django 4.2, python 3.9
+# - django 4.2, python 3.11
+# - django main, python 3.11
+
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python: '3.7'
+            django: 'Django>=2.2,<2.3'
+            dalec: dalec>=0.2,<0.3
+            install_extras: pip install django-jsonfield-backport
+            experimental: false
+          - python: '3.7'
+            django: 'Django>=3.2,<3.3'
+            dalec: dalec>=0.2,<0.3
+            experimental: false
+          - python: '3.9'
+            django: 'Django>=4.2,<4.3'
+            dalec: dalec>=0.2,<0.3
+            experimental: false
+          - python: '3.11'
+            django: 'Django>=4.2,<4.3'
+            dalec: dalec>=0.2,<0.3
+            experimental: false
+          - python: '3.11'
+            django: 'git+https://github.com/django/django.git@main#egg=Django'
+            dalec: dalec>=0.2,<0.3
+            experimental: true
+          - python: '3.11'
+            django: 'git+https://github.com/django/django.git@main#egg=Django'
+            dalec: 'git+https://github.com/webu/dalec.git@main#egg=dalec'
+            experimental: true
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "${{ matrix.django }}"
+          pip install "${{ matrix.dalec }}"
+          pip install -e .[testing]
+          ${{ matrix.install_extras }}
+      - name: Test
+        run: |
+          coverage run --parallel-mode ./runtests.py
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-data
+          path: .coverage.*
+
+  qa:
+    needs:
+      - test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install coverage black flake8 mypy types-requests
+
+      - name: Check black
+        run: |
+          black --check ./
+
+      - name: Check flake8
+        run: |
+          flake8
+
+      - name: Check mypy
+        run: |
+          mypy -p dalec_caldav
+
+      - name: Download coverage data
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage-data
+
+      - name: Save PR number and combine coverage data
+        run: |
+          mkdir -p ./pr
+          coverage combine
+          coverage report -m --format="markdown" > ./pr/coverage.md
+          coverage report --format="total" > ./pr/coverage_total
+          echo ${{ github.event.number }} > ./pr/NR
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: pr
+          path: pr/

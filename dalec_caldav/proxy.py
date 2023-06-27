@@ -1,10 +1,17 @@
-from typing import Dict
+from __future__ import annotations
+
+from datetime import datetime
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
+if TYPE_CHECKING:
+    from typing import Dict, Any
+    from caldav.objects import Calendar, Event
+
 from caldav import DAVClient, dav
-from dalec.proxy import Proxy
 from django.conf import settings
-from django.utils.timezone import now
+
+from dalec.proxy import Proxy
 
 client = DAVClient(
     url=settings.DALEC_CALDAV_BASE_URL,
@@ -28,13 +35,14 @@ class CaldavProxy(Proxy):
 
         raise ValueError(f"Invalid content_type {content_type}. Accepted: event.")
 
-    def _fetch_event(self, nb, channel=None, channel_object=None):
+    def _fetch_event(
+        self, nb: int, channel: str, channel_object: str
+    ) -> Dict[str, dict]:
         """
-        Get latest event from calendar
+        Get latest events from calendar(s)
         """
-        options = {"per_page": nb}
 
-        if channel == "url":
+        if channel == "url" and channel_object:
             if channel_object[-1] != "/":
                 channel_object += "/"
             calendars = client.calendar(url=channel_object)
@@ -46,34 +54,67 @@ class CaldavProxy(Proxy):
 
         contents = {}
         for calendar in calendars:
-            calendar_displayname = calendar.get_property(dav.DisplayName())
-            calendar_url = calendar.url.url_raw
-
+            calendar_infos = self._get_calendar_infos(calendar)
             for event in calendar.events():
-                id = str(event.vobject_instance.vevent.contents["uid"][0].value)
-                content = {
-                    key: val[0].value
-                    for key, val in event.vobject_instance.vevent.contents.items()
-                }
-                content["event_url"] = str(event.url)
-                content["dav_calendar_url"] = calendar_url
-                content["calendar_displayname"] = calendar_displayname
-
-                res = urlparse(calendar.url.url_raw)
-                if "/remote.php/dav/public-calendars/" in res.path:
-                    # seems to be nextcloud
-                    token = res.path.split("/")[-2]
-                    nextcloud_calendar_url = (
-                        "{}://{}/index.php/apps/calendar/p/{}".format(
-                            res.scheme, res.netloc, token
-                        )
-                    )
-                    content["nextcloud_calendar_url"] = nextcloud_calendar_url
-
-                contents[id] = {
-                    **content,
-                    "id": id,
-                    "creation_dt": content["created"],
-                    "last_update_dt": now(),
-                }
+                content = self._populate_content(event, calendar_infos)
+                contents[content["id"]] = content
         return contents
+
+    def _get_calendar_infos(self, calendar: Calendar) -> Dict[str, Any]:
+        url = str(calendar.url)
+        infos = {
+            "type": "default",
+            "display_name": calendar.get_property(dav.DisplayName()),
+            "url": url,
+        }
+        if "/remote.php/dav/public-calendars/" in url:
+            url_obj = urlparse(url)
+            token = url_obj.path.split("/")[-2]
+            nextcloud_calendar_url = "{}://{}/index.php/apps/calendar/p/{}".format(
+                url_obj.scheme, url_obj.netloc, token
+            )
+            infos.update(
+                {
+                    "nextcloud_calendar_url": nextcloud_calendar_url,
+                    "token": token,
+                }
+            )
+        return infos
+
+    def _populate_content(self, event: Event, calendar_infos: Dict[str, Any]) -> dict:
+        content = {
+            key: val[0].value
+            for key, val in event.vobject_instance.vevent.contents.items()
+        }
+        content["event_url"] = str(event.url)
+        content["dav_calendar_url"] = calendar_infos["url"]
+        content["calendar_displayname"] = calendar_infos["display_name"]
+
+        if calendar_infos["type"] == "nextcloud":
+            content["nextcloud_calendar_url"] = calendar_infos["nextcloud_calendar_url"]
+        duration = content["dtend"] - content["dtstart"]
+        content.update(
+            {
+                "id": str(event.vobject_instance.vevent.contents["uid"][0].value),
+                "creation_dt": content["created"],
+                "last_update_dt": content["last-modified"],
+                "duration": {
+                    "days": duration.days,
+                    "seconds": duration.seconds,
+                    "total_seconds": int(duration.total_seconds()),
+                },
+            }
+        )
+        if isinstance(content["dtstart"], datetime):
+            content["start_date"] = content["dtstart"].date()
+            content["start_time"] = content["dtstart"].time()
+        else:
+            content["start_date"] = content["dtstart"]
+            content["start_time"] = None
+        if isinstance(content["dtend"], datetime):
+            content["end_date"] = content["dtend"].date()
+            content["end_time"] = content["dtend"].time()
+        else:
+            content["end_date"] = content["dtend"]
+            content["end_time"] = None
+        return content
