@@ -1,11 +1,13 @@
 name: Publish Python 🐍 distributions 📦 to PyPI
 
-on: push
+on: 
+  push:
+    tags:
+      - '*'
 
 
 jobs:
   build-n-publish:
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     name: Build and publish Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-latest
     environment:
@@ -36,7 +38,6 @@ jobs:
     - name: Publish package distributions to yPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        repository-url: https://pypi.org/legacy/
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
 
