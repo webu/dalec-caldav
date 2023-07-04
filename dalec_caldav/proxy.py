@@ -1,5 +1,7 @@
+# Future imports
 from __future__ import annotations
 
+# Standard libs
 from datetime import datetime
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
@@ -8,9 +10,12 @@ if TYPE_CHECKING:
     from typing import Dict, Any
     from caldav.objects import Calendar, Event
 
-from caldav import DAVClient, dav
+# Django imports
 from django.conf import settings
 
+# DALEC imports
+from caldav import DAVClient
+from caldav import dav
 from dalec.proxy import Proxy
 
 client = DAVClient(
@@ -35,9 +40,7 @@ class CaldavProxy(Proxy):
 
         raise ValueError(f"Invalid content_type {content_type}. Accepted: event.")
 
-    def _fetch_event(
-        self, nb: int, channel: str, channel_object: str
-    ) -> Dict[str, dict]:
+    def _fetch_event(self, nb: int, channel: str, channel_object: str) -> Dict[str, dict]:
         """
         Get latest events from calendar(s)
         """
@@ -83,8 +86,7 @@ class CaldavProxy(Proxy):
 
     def _populate_content(self, event: Event, calendar_infos: Dict[str, Any]) -> dict:
         content = {
-            key: val[0].value
-            for key, val in event.vobject_instance.vevent.contents.items()
+            key: val[0].value for key, val in event.vobject_instance.vevent.contents.items()
         }
         content["event_url"] = str(event.url)
         content["dav_calendar_url"] = calendar_infos["url"]
