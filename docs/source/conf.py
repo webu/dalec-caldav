@@ -13,9 +13,10 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../.."))
 
+# DALEC imports
 from dalec_caldav import __version__ as dalec_version  # noqa
 
-project = "Dalec"
+project = "Dalec - Caldav"
 copyright = "2023, Webu"
 author = "Webu"
 release = dalec_version
