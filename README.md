@@ -14,7 +14,7 @@ Plugin of [🤖 dalec](https://github.com/webu/dalec).
 ## Installation
 
 ```
-pip install dalec_caldav
+pip install dalec-caldav
 ```
 
 In django settings `INSTALLED_APPS`, add:
