@@ -1,42 +1,54 @@
 {% extends "dalec/default/item.html" %}
-{% load dalec %}
+{% load dalec i18n %}
 {% block item_content %}
-<div>
-    <div class="caldav item title">
-        <b>Nom :</b> {{object.content_data.summary|default:"Sans titre"}}
-    </div>
-    <div class="caldav item date">
-        {% if "T" in object.content_data.dtstart %}
-        <b>Du</b> {{object.content_data.dtstart|to_datetime:"%Y-%m-%dT%H:%M:%S%z"}}
-        <b>au</b> {{object.content_data.dtend|to_datetime:"%Y-%m-%dT%H:%M:%S%z"}}.
-        {% else %}
-        <b>Le</b> {{object.content_data.dtstart|to_datetime:"%Y-%m-%d"|date:"DATE_FORMAT"}}.
-        {% endif %}
-    </div>
-    <div class="caldav item location">
-        <b>Lieu :</b> {{object.content_data.location|default:"Non défini"}}
-    </div>
-    <div class="caldav item ics">
-        <a href="{{object.content_data.event_url}}" target="_blank">
-            Ajouter à l'agenda
-            {# For some reason, it does not work unless refreshing page after... TODO. #}
-        </a>
-    </div>
-    <div class="caldav item description">
-        {{object.content_data.description}}
-    </div>
-</div>
-
-
-<div>
-    <button id="btnFadetoggle"
-            class="btn btn-primary"
-            type="button"
-            onclick="$('.api-full').fadeToggle();"
-            >
-            Voir tout le retour de l'API
-    </button>
-    <pre class="api-full" style="display: none;"> {{ object.content_data|pprint }} </pre>
-</div>
-<hr>
+<acticle class="h-event">
+    <header>
+        {% block item_header %}
+            <h1 class="p-name">{{ object.content_data.summary|default:"Sans titre" }} </h1>
+            <div class="caldav-item-dates">
+                {% with start_dt=object.content_data.dtstart|to_datetime end_dt=object.content_data.dtend|to_datetime %}
+                    {% if object.content_data.duration.total_seconds != 86400 %}
+                        <time class="dt-start" datetime="{% if object.content_data.start_time %}{{ start_dt|date:"c" }}{% else %}{{ object.content_data.start_date }}{% endif %}">
+                            {% if object.content_data.start_time %}
+                                {{ start_dt|date:"DATETIME_FORMAT" }}
+                            {% else %}
+                                {{ start_dt|date:"DATE_FORMAT" }}
+                            {% endif %}
+                        </time>
+                        <time class="dt-end" datetime="{% if object.content_data.end_time %}{{ end_dt|date:"c" }}{% else %}{{ object.content_data.end_date }}{% endif %}">
+                            {% if object.content_data.end_time %}
+                                {{ end_dt|date:"DATETIME_FORMAT" }}
+                            {% else %}
+                                {{ end_dt|date:"DATE_FORMAT" }}
+                            {% endif %}
+                        </time>
+                    {% else %}
+                        <time class="dt-start" datetime="{{ object.content_data.start_date }}">
+                            {% if object.content_data.start_time %}
+                                {{ start_dt|date:"DATETIME_FORMAT" }}
+                            {% else %}
+                                {{ start_dt|date:"DATE_FORMAT" }}
+                            {% endif %}
+                        </time>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            {% if object.content_data.location %}
+                <address class="caldav-item-location p-location">{{ object.content_data.location }}</address>
+            {% endif %}
+        {% endblock %}
+    </header>
+    <main class="caldav-item-description p-summary">
+        {% block item_main %}
+            {{ object.content_data.description }}
+        {% endblock %}
+    </main>
+    <footer>
+        {% block item_footer %}
+            {% if object.content_data.event_url %}
+                <a class="caldav-item-ics" href="{{ object.content_data.event_url }}" target="_blank">{% trans "Add to my Calendar" %}</a>
+            {% endif %}
+        {% endblock %}
+    </footer>
+</article>
 {% endblock %}

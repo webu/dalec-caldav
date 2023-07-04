@@ -36,19 +36,19 @@ General usage:
 ```django
 {% load dalec %}
 
-{% dalec "caldav" content_type [channel=None] [channel_object=None] [template=None] %}
+{% dalec "caldav" content_type [channel=None] [channel_object=None] [template=None] [ordered_by=None] %}
 ```
 
 ### Events
 
-Retrieves latest event of all calendars accessible for the current user:
+Retrieves latest updated events of all calendars accessible for the current user:
 ```django
 {% dalec "caldav" "event" %}
 ```
 
-Retrieves latest event of a calendar defined by an url:
+Retrieves latest updated events of a calendar defined by an url:
 ```django
-{% dalec "caldav" "event" channel="url" channel_object="https://nextcloud.org/remote.php/dav/public-calendars/<calendarID>"%}
+{% dalec "caldav" "event" channel="url" channel_object="https://nextcloud.org/remote.php/dav/public-calendars/<calendarID>" %}
 ```
 
 
@@ -59,5 +59,3 @@ Django settings must define:
   - `DALEC_CALDAV_BASE_URL` : CalDav instance url (ex: `https://caldav.org/`)
   - `DALEC_CALDAV_API_USERNAME` : CalDav username (ex: `admin`)
   - `DALEC_CALDAV_API_PASSWORD` : CalDav user password (ex: `azeazeaezdfqsmlkrjzr`)
-
-
