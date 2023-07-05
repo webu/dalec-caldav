@@ -58,13 +58,9 @@ class DalecTests(DalecTestCaseMixin, TestCase):
         self.assertEqual(qs.count(), 6)
         contents = dict((c.content_id.split("-", 1)[0], c) for c in qs)
         self.assertIn("88bb03ce", contents)
-        self.assertEqual(
-            contents["88bb03ce"].content_data["calendar_displayname"], "Secondary"
-        )
+        self.assertEqual(contents["88bb03ce"].content_data["calendar_displayname"], "Secondary")
         self.assertIn("0239cc8f", contents)
-        self.assertEqual(
-            contents["0239cc8f"].content_data["calendar_displayname"], "Primary"
-        )
+        self.assertEqual(contents["0239cc8f"].content_data["calendar_displayname"], "Primary")
         self.assertIn("04bbb7da", contents)
         self.assertIn("f54e19f1", contents)
         self.assertIn("b843d43a", contents)
@@ -74,9 +70,7 @@ class DalecTests(DalecTestCaseMixin, TestCase):
         orig_keys = [k for k in contents.keys()]
         expect_keys = [
             c.content_id.split("-", 1)[0]
-            for c in sorted(
-                contents.values(), key=lambda c: c.last_update_dt, reverse=True
-            )
+            for c in sorted(contents.values(), key=lambda c: c.last_update_dt, reverse=True)
         ]
         self.assertEqual(orig_keys, expect_keys)
 
@@ -98,9 +92,7 @@ class DalecTests(DalecTestCaseMixin, TestCase):
         self.assertEqual(qs.count(), 1)
         contents = dict((c.content_id.split("-", 1)[0], c) for c in qs)
         self.assertIn("88bb03ce", contents)
-        self.assertEqual(
-            contents["88bb03ce"].content_data["calendar_displayname"], "Secondary"
-        )
+        self.assertEqual(contents["88bb03ce"].content_data["calendar_displayname"], "Secondary")
 
     def test_dates(self):
         kwargs = {"app": "caldav", "content_type": "event", "channel": "url"}
@@ -136,12 +128,8 @@ class DalecTests(DalecTestCaseMixin, TestCase):
 
         # event on 9+ days, with hours
         self.assertEqual(contents["f54e19f1"].content_data["duration"]["days"], 9)
-        self.assertEqual(
-            contents["f54e19f1"].content_data["duration"]["seconds"], 14400
-        )
-        self.assertEqual(
-            contents["f54e19f1"].content_data["duration"]["total_seconds"], 792000
-        )
+        self.assertEqual(contents["f54e19f1"].content_data["duration"]["seconds"], 14400)
+        self.assertEqual(contents["f54e19f1"].content_data["duration"]["total_seconds"], 792000)
         self.assertEqual(contents["f54e19f1"].content_data["start_time"], "20:10:00")
         self.assertEqual(contents["f54e19f1"].content_data["end_time"], "00:10:00")
         self.assertEqual(contents["f54e19f1"].content_data["start_date"], "2030-10-10")
@@ -150,9 +138,7 @@ class DalecTests(DalecTestCaseMixin, TestCase):
         # event for some hours
         self.assertEqual(contents["8c6c5b2d"].content_data["duration"]["days"], 0)
         self.assertEqual(contents["8c6c5b2d"].content_data["duration"]["seconds"], 2520)
-        self.assertEqual(
-            contents["8c6c5b2d"].content_data["duration"]["total_seconds"], 2520
-        )
+        self.assertEqual(contents["8c6c5b2d"].content_data["duration"]["total_seconds"], 2520)
         self.assertEqual(contents["8c6c5b2d"].content_data["start_time"], "00:42:00")
         self.assertEqual(contents["8c6c5b2d"].content_data["end_time"], "01:24:00")
         self.assertEqual(contents["8c6c5b2d"].content_data["start_date"], "2042-02-11")

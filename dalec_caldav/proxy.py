@@ -1,5 +1,7 @@
+# Future imports
 from __future__ import annotations
 
+# Standard libs
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -11,12 +13,15 @@ if TYPE_CHECKING:
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
-from caldav.davclient import DAVClient
-from caldav.elements import dav
-from caldav.objects import Event
+# Django imports
 from django.conf import settings
 from django.utils.timezone import make_aware, now
 
+
+# DALEC imports
+from caldav.davclient import DAVClient
+from caldav.elements import dav
+from caldav.objects import Event
 from dalec import settings as app_settings
 from dalec.proxy import Proxy
 
@@ -41,9 +46,7 @@ class CaldavProxy(Proxy):
             return self._fetch_event(nb, channel, channel_object)
         raise ValueError(f"Invalid content_type {content_type}. Accepted: event.")
 
-    def _fetch_event(
-        self, nb: int, channel: str, channel_object: str
-    ) -> Dict[str, dict]:
+    def _fetch_event(self, nb: int, channel: str, channel_object: str) -> Dict[str, dict]:
         """
         Get latest events from calendar(s)
         """
@@ -70,9 +73,7 @@ class CaldavProxy(Proxy):
         start_td = app_settings.get_setting(
             "CALDAV_SERCH_EVENT_START_TIMEDELTA", timedelta(days=-1)
         )
-        end_td = app_settings.get_setting(
-            "CALDAV_SERCH_EVENT_END_TIMEDELTA", timedelta(days=365)
-        )
+        end_td = app_settings.get_setting("CALDAV_SERCH_EVENT_END_TIMEDELTA", timedelta(days=365))
         search_kwargs = {
             "comp_class": Event,
             "start": now() + start_td if start_td is not None else None,
@@ -102,9 +103,7 @@ class CaldavProxy(Proxy):
             )
         return infos
 
-    def _vobject_to_dict(
-        self, vobject: Component
-    ) -> Dict[str, Any[str, int, datetime, date]]:
+    def _vobject_to_dict(self, vobject: Component) -> Dict[str, Any[str, int, datetime, date]]:
         content = {}
         for key, val in vobject.contents.items():
             if hasattr(val[0], "contents"):
