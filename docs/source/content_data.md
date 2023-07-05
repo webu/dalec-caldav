@@ -24,15 +24,24 @@ It retrieves event contents. It also try to retrieve full url if it "seems to be
 
 `"key": "value"` is a placeholder and represent every content in the vevent contents of your calendar
 
-```json
+```python
 {
  "key": "value",
  "event_url": "https://caldav.org/event_url",
  "dav_calendar_url": "calendar_url",
- "calendar_displayname": "My Calendar"
+ "calendar_displayname": "My Calendar",
  "nextcloud_calendar_url": "https://nextcloud.org/index.php/apps/calendar/p/TOKEN",
- "id": "uuid",
+ "id": "uuid of this event",
  "creation_dt": "2019-10-02T09:56:40.296Z",
  "last_update_dt": "2019-10-02T09:56:40.296Z",
+ "duration": {
+     "days": 1,
+     "seconds": 0,
+     "total_seconds": 86400,
+ },
+ "start_date": "2019-10-02",
+ "start_time": "09:00:00",
+ "end_date": "2019-10-03",
+ "end_time": "09:00:00"
 }
 ```

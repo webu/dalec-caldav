@@ -1,0 +1,14 @@
+# 0.2.0
+
+* Add `DALEC_CALDAV_SERCH_EVENT_START_TIMEDELTA` and `DALEC_CALDAV_SERCH_EVENT_END_TIMEDELTA` 
+  settings. Default values are respectively -1 day and +365 days.  
+  It could be a breaking change if the real behaviour you expected was to only keep only the X 
+  oldest events. (`X` depending the settings). If you want to continue to fetch all events, you
+  can set those settings to `None`.
+* Improve tests with ICS files containing different test cases
+* Add the hability to test with other external caldav servers to be sure that this Dalec will work 
+  with your specific caldav server.
+
+# 0.1.0
+
+* First official release \o/
