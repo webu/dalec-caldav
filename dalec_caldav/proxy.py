@@ -73,9 +73,7 @@ class CaldavProxy(Proxy):
         start_td = app_settings.get_setting(
             "CALDAV_SERCH_EVENT_START_TIMEDELTA", timedelta(days=-1)
         )
-        end_td = app_settings.get_setting(
-            "CALDAV_SERCH_EVENT_END_TIMEDELTA", timedelta(days=365)
-        )
+        end_td = app_settings.get_setting("CALDAV_SERCH_EVENT_END_TIMEDELTA", timedelta(days=365))
         search_kwargs = {
             "comp_class": Event,
             "start": now() + start_td if start_td is not None else None,
@@ -105,9 +103,7 @@ class CaldavProxy(Proxy):
             )
         return infos
 
-    def _vobject_to_dict(
-        self, vobject: Component
-    ) -> Dict[str, Any[str, int, datetime, date]]:
+    def _vobject_to_dict(self, vobject: Component) -> Dict[str, Any[str, int, datetime, date]]:
         content = {}
         for key, val in vobject.contents.items():
             if hasattr(val[0], "contents"):
