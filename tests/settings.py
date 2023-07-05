@@ -2,6 +2,11 @@ import os
 
 import django
 
+try:
+    from .local_settings import *  # noqa: F403
+except ImportError:
+    pass
+
 BASE_PATH = os.path.join(os.path.dirname(__file__), "..")
 SECRET_KEY = "EX-TER-MI-NA-TE"
 
@@ -36,8 +41,21 @@ DATABASES = {
     }
 }
 
-DALEC_CALDAV_BASE_URL = (
-    "http://localhost:5232/test/7eb24728-09c0-3977-4fca-e7bec231f7a0/"
-)
+DALEC_CALDAV_BASE_URL = "http://localhost:5232/test/"
 DALEC_CALDAV_API_USERNAME = "test"
 DALEC_CALDAV_API_PASSWORD = "test"
+# For tests, we want ALL events (except for DALEC_EXTRA_CALDAV_URLS: it will be 365 days max)
+DALEC_CALDAV_SERCH_EVENT_END_TIMEDELTA = None
+
+try:
+    # should be defined in local_settings
+    DALEC_EXTRA_CALDAV_URLS  # noqa: F405
+except NameError:
+    DALEC_EXTRA_CALDAV_URLS = {
+        # should be with this format:
+        # "nextclould-v27": {
+        #     "url": "https://nextcloud.example.com/index.php/apps/calendar/p/xxx/CalendarName",
+        #     "username": "test",  # optionnal, only if this caldav needs authentication
+        #     "password": "test",  # optionnal, only if this caldav needs authentication
+        # }
+    }
