@@ -1,24 +1,52 @@
+from datetime import timedelta
+from importlib import reload
+from unittest import skipIf
+
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.template import Context, Template
 from django.test import Client, TestCase
 from django.urls import reverse
+from requests.exceptions import ConnectionError
 
+from dalec.proxy import ProxyPool
 from dalec.tests_utils import DalecTestCaseMixin
+from dalec_caldav import proxy
 
 __all__ = ["DalecTests"]
 
 
 class DalecTests(DalecTestCaseMixin, TestCase):
-    radical_calendar_url = settings.DALEC_CALDAV_BASE_URL
+    def _cal_url(self, cal):
+        if cal == "primary":
+            cal = "7eb24728-09c0-3977-4fca-e7bec231f7a0"
+        elif cal == "secondary":
+            cal = "4fc45ea4-371e-81ab-ee54-295eb8ec28a6"
+        return "%s/%s" % (settings.DALEC_CALDAV_BASE_URL, cal)
 
-    def test_retrieve_events(self):
+    def test_caldav_with_wrong_url(self):
+        wrong_url = "https://doesnoexist.dalec.webu.coop/"
+        with self.settings(DALEC_CALDAV_BASE_URL=wrong_url):
+            ProxyPool.unregister("caldav")
+            reload(proxy)
+            dalec_caldav = ProxyPool.get("caldav")
+            with self.assertRaises(ConnectionError):
+                dalec_caldav.refresh(
+                    content_type="event",
+                    channel="url",
+                    channel_object=wrong_url,
+                    force=True,
+                )
+        ProxyPool.unregister("caldav")
+        reload(proxy)
+
+    def test_retrieve_events_from_multiple_calendars(self):
         kwargs = {"app": "caldav", "content_type": "event", "channel": "url"}
         url = reverse("dalec_fetch_content", kwargs=kwargs)
         client = Client()
         response = client.post(
             url,
-            '{"channelObjects": ["%s"]}' % self.radical_calendar_url,
+            # no channel objects: lets fetch events from all calendars
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
@@ -26,11 +54,17 @@ class DalecTests(DalecTestCaseMixin, TestCase):
             app="caldav",
             content_type="event",
             channel="url",
-            channel_object=self.radical_calendar_url,
         )
-        self.assertEqual(qs.count(), 5)
+        self.assertEqual(qs.count(), 6)
         contents = dict((c.content_id.split("-", 1)[0], c) for c in qs)
+        self.assertIn("88bb03ce", contents)
+        self.assertEqual(
+            contents["88bb03ce"].content_data["calendar_displayname"], "Secondary"
+        )
         self.assertIn("0239cc8f", contents)
+        self.assertEqual(
+            contents["0239cc8f"].content_data["calendar_displayname"], "Primary"
+        )
         self.assertIn("04bbb7da", contents)
         self.assertIn("f54e19f1", contents)
         self.assertIn("b843d43a", contents)
@@ -46,13 +80,13 @@ class DalecTests(DalecTestCaseMixin, TestCase):
         ]
         self.assertEqual(orig_keys, expect_keys)
 
-    def test_dates(self):
+    def test_retrieve_events_from_unique_calendars(self):
         kwargs = {"app": "caldav", "content_type": "event", "channel": "url"}
         url = reverse("dalec_fetch_content", kwargs=kwargs)
         client = Client()
         response = client.post(
             url,
-            '{"channelObjects": ["%s"]}' % self.radical_calendar_url,
+            '{"channelObjects": ["%s"]}' % self._cal_url("secondary"),
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
@@ -60,7 +94,29 @@ class DalecTests(DalecTestCaseMixin, TestCase):
             app="caldav",
             content_type="event",
             channel="url",
-            channel_object=self.radical_calendar_url,
+        )
+        self.assertEqual(qs.count(), 1)
+        contents = dict((c.content_id.split("-", 1)[0], c) for c in qs)
+        self.assertIn("88bb03ce", contents)
+        self.assertEqual(
+            contents["88bb03ce"].content_data["calendar_displayname"], "Secondary"
+        )
+
+    def test_dates(self):
+        kwargs = {"app": "caldav", "content_type": "event", "channel": "url"}
+        url = reverse("dalec_fetch_content", kwargs=kwargs)
+        client = Client()
+        response = client.post(
+            url,
+            '{"channelObjects": ["%s"]}' % self._cal_url("primary"),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        qs = self.content_model.objects.filter(
+            app="caldav",
+            content_type="event",
+            channel="url",
+            channel_object=self._cal_url("primary"),
         )
         self.assertEqual(qs.count(), 5)
         contents = dict((c.content_id.split("-", 1)[0], c) for c in qs)
@@ -114,7 +170,7 @@ class DalecTests(DalecTestCaseMixin, TestCase):
         client = Client()
         response = client.post(
             url,
-            '{"channelObjects": ["%s"]}' % self.radical_calendar_url,
+            '{"channelObjects": ["%s"]}' % self._cal_url("primary"),
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
@@ -125,7 +181,7 @@ class DalecTests(DalecTestCaseMixin, TestCase):
             {% dalec "caldav" "event" channel="url" channel_object=url ordered_by="dtstart" %}
         """
         )
-        output = t.render(Context({"url": self.radical_calendar_url}))
+        output = t.render(Context({"url": self._cal_url("primary")}))
         soup = BeautifulSoup(output, "html.parser")
         dalec_divs = soup.find_all(class_="dalec-item")
         date_divs = soup.find_all(class_="caldav-item-dates")
@@ -149,3 +205,41 @@ class DalecTests(DalecTestCaseMixin, TestCase):
         self.assertEqual(len(times), 2)
         self.assertEqual(times[0]["datetime"], "2042-02-11T00:42:00+01:00")
         self.assertEqual(times[1]["datetime"], "2042-02-11T01:24:00+01:00")
+
+    @skipIf(
+        bool(settings.DALEC_EXTRA_CALDAV_URLS) is False,
+        "no extra caldavs to test. see README and local_settings.py if you want to",
+    )
+    def test_retrieve_events_from_other_caldavs(self):
+        for name, conf in settings.DALEC_EXTRA_CALDAV_URLS.items():
+            ProxyPool.unregister("caldav")
+            new_settings = {
+                "DALEC_CALDAV_BASE_URL": conf["url"],
+                "DALEC_CALDAV_API_USERNAME": conf.get("username"),
+                "DALEC_CALDAV_API_PASSWORD": conf.get("password"),
+                "DALEC_CALDAV_SERCH_EVENT_END_TIMEDELTA": timedelta(days=365),
+            }
+            with self.settings(**new_settings):
+                reload(proxy)
+                dalec_caldav = ProxyPool.get("caldav")
+            try:
+                nb_created, nb_updated, nb_deleted = dalec_caldav.refresh(
+                    content_type="event",
+                    channel="url",
+                    channel_object=conf["url"],
+                    force=True,
+                )
+            except Exception as e:
+                raise Exception("%s error: %s" % (name, e)) from e
+            qs = self.content_model.objects.filter(
+                app="caldav",
+                content_type="event",
+                channel="url",
+                channel_object=conf["url"],
+            )
+            self.assertTrue(qs.exists())
+            self.assertGreaterEqual(nb_created, 1)
+            self.assertEqual(nb_updated, 0)
+            self.assertGreaterEqual(nb_created, qs.count())
+        ProxyPool.unregister("caldav")
+        reload(proxy)
