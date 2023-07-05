@@ -136,18 +136,22 @@ class CaldavProxy(Proxy):
             content["created"] = min(dates) if dates else None
         if "last-modified" not in content:
             content["last-modified"] = content["created"]
-        if not content["created"].tzinfo:
-            content["created"] = make_aware(content["created"])
-        if not content["last-modified"].tzinfo:
-            content["last-modified"] = make_aware(content["last-modified"])
         if calendar_infos["type"] == "nextcloud":
             content["nextcloud_calendar_url"] = calendar_infos["nextcloud_calendar_url"]
         duration = event.get_duration()
         content.update(
             {
                 "id": content["uid"],
-                "creation_dt": content["created"],
-                "last_update_dt": content["last-modified"],
+                "creation_dt": (
+                    make_aware(content["created"])
+                    if not content["created"].tzinfo
+                    else content["created"]
+                ),
+                "last_update_dt": (
+                    make_aware(content["last-modified"])
+                    if not content["last-modified"].tzinfo
+                    else content["last-modified"]
+                ),
                 "duration": {
                     "days": duration.days,
                     "seconds": duration.seconds,
